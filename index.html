@@ -129,15 +129,7 @@ async function admToggleActivo(id, activo){
   }
 }
 
-// Cargar usuarios cuando se abre el panel
-const _origAppGo = appGo;
-function appGo(page, btn){
-  _origAppGo(page, btn);
-  if (page === 'admin') {
-    setUserChips2();
-    admCargarUsuarios();
-  }
-}
+// Cargar usuarios cuando se abre el panel - sin override
 
 function setUserChips2(){
   if (!AUTH.user) return;
@@ -741,6 +733,7 @@ function go(id){
   window.scrollTo(0,0);
   if (id==='dashboard') loadDashboard();
   if (id==='records') loadRecords();
+  if (id==='admin') { setUserChips2(); admCargarUsuarios(); }
 }
 function appGo(page,btn){ go(page); document.querySelectorAll('.al').forEach(b=>b.classList.remove('on')); if(btn) btn.classList.add('on'); }
 function scrollTo2(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth'});}
@@ -1129,15 +1122,7 @@ async function admToggleActivo(id, activo){
   }
 }
 
-// Cargar usuarios cuando se abre el panel
-const _origAppGo = appGo;
-function appGo(page, btn){
-  _origAppGo(page, btn);
-  if (page === 'admin') {
-    setUserChips2();
-    admCargarUsuarios();
-  }
-}
+// Cargar usuarios cuando se abre el panel - sin override
 
 function setUserChips2(){
   if (!AUTH.user) return;
