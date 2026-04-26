@@ -576,7 +576,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 </div>
 
 <script>
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://rzip-backend-production.up.railway.app';
 let AUTH = { token: null, user: null };
 let RS = { file:null, hash:null, result:null };
 try { const saved = sessionStorage.getItem('rzip_auth'); if (saved) AUTH = JSON.parse(saved); } catch(e){}
