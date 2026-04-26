@@ -140,6 +140,95 @@ function setUserChips2(){
   if (a) a.textContent = ini;
 }
 
+
+// ═══════════════════════════════════════
+// RESET DE CONTRASEÑA
+// ═══════════════════════════════════════
+
+function mostrarReset(){
+  $('form-login').style.display='none';
+  $('form-reset').style.display='';
+}
+
+function ocultarReset(){
+  $('form-reset').style.display='none';
+  $('form-login').style.display='';
+  $('reset-err').style.display='none';
+  $('reset-ok').style.display='none';
+  $('reset-email').value='';
+}
+
+async function doSolicitarReset(){
+  const email = $('reset-email').value.trim();
+  const err = $('reset-err');
+  const ok = $('reset-ok');
+  const btn = $('reset-btn');
+  err.style.display='none';
+  ok.style.display='none';
+
+  if (!email) { err.textContent='Ingresa tu email'; err.style.display='block'; return; }
+
+  btn.disabled=true; btn.textContent='Enviando…';
+  try {
+    const r = await fetch(API_URL+'/auth/solicitar-reset', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const data = await r.json();
+    ok.textContent = '✓ Si el email existe recibirás un correo en los próximos minutos.';
+    ok.style.display='block';
+    $('reset-email').value='';
+  } catch(e) {
+    err.textContent = 'Error al enviar. Intenta de nuevo.';
+    err.style.display='block';
+  } finally {
+    btn.disabled=false; btn.textContent='Enviar link →';
+  }
+}
+
+async function doConfirmarReset(){
+  const password = $('new-pass').value;
+  const password2 = $('new-pass2').value;
+  const err = $('new-pass-err');
+  const ok = $('new-pass-ok');
+  err.style.display='none';
+  ok.style.display='none';
+
+  if (!password || !password2) {
+    err.textContent='Completa ambos campos'; err.style.display='block'; return;
+  }
+  if (password !== password2) {
+    err.textContent='Las contraseñas no coinciden'; err.style.display='block'; return;
+  }
+  if (password.length < 8) {
+    err.textContent='Mínimo 8 caracteres'; err.style.display='block'; return;
+  }
+
+  const token = window._resetTokenValue;
+  if (!token) {
+    err.textContent='Token inválido. Solicita un nuevo link.'; err.style.display='block'; return;
+  }
+
+  try {
+    const r = await fetch(API_URL+'/auth/confirmar-reset', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token, password })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    ok.textContent = '✓ Contraseña actualizada. Ahora puedes iniciar sesión.';
+    ok.style.display='block';
+    $('new-pass').value='';
+    $('new-pass2').value='';
+    setTimeout(()=>go('auth'), 2500);
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display='block';
+  }
+}
+
 </script>
 <style>
 :root{
@@ -718,7 +807,7 @@ let AUTH = { token: null, user: null };
 let RS = { file:null, hash:null, result:null };
 try { const saved = sessionStorage.getItem('rzip_auth'); if (saved) AUTH = JSON.parse(saved); } catch(e){}
 
-const PAGES = ['landing','auth','dashboard','register','records','verify','admin'];
+const PAGES = ['landing','auth','dashboard','register','records','verify','admin','reset'];
 function go(id){
   const privadas = ['dashboard','register','records'];
   if (privadas.includes(id) && !AUTH.token) { id = 'auth'; }
@@ -1133,6 +1222,95 @@ function setUserChips2(){
   if (a) a.textContent = ini;
 }
 
+
+// ═══════════════════════════════════════
+// RESET DE CONTRASEÑA
+// ═══════════════════════════════════════
+
+function mostrarReset(){
+  $('form-login').style.display='none';
+  $('form-reset').style.display='';
+}
+
+function ocultarReset(){
+  $('form-reset').style.display='none';
+  $('form-login').style.display='';
+  $('reset-err').style.display='none';
+  $('reset-ok').style.display='none';
+  $('reset-email').value='';
+}
+
+async function doSolicitarReset(){
+  const email = $('reset-email').value.trim();
+  const err = $('reset-err');
+  const ok = $('reset-ok');
+  const btn = $('reset-btn');
+  err.style.display='none';
+  ok.style.display='none';
+
+  if (!email) { err.textContent='Ingresa tu email'; err.style.display='block'; return; }
+
+  btn.disabled=true; btn.textContent='Enviando…';
+  try {
+    const r = await fetch(API_URL+'/auth/solicitar-reset', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const data = await r.json();
+    ok.textContent = '✓ Si el email existe recibirás un correo en los próximos minutos.';
+    ok.style.display='block';
+    $('reset-email').value='';
+  } catch(e) {
+    err.textContent = 'Error al enviar. Intenta de nuevo.';
+    err.style.display='block';
+  } finally {
+    btn.disabled=false; btn.textContent='Enviar link →';
+  }
+}
+
+async function doConfirmarReset(){
+  const password = $('new-pass').value;
+  const password2 = $('new-pass2').value;
+  const err = $('new-pass-err');
+  const ok = $('new-pass-ok');
+  err.style.display='none';
+  ok.style.display='none';
+
+  if (!password || !password2) {
+    err.textContent='Completa ambos campos'; err.style.display='block'; return;
+  }
+  if (password !== password2) {
+    err.textContent='Las contraseñas no coinciden'; err.style.display='block'; return;
+  }
+  if (password.length < 8) {
+    err.textContent='Mínimo 8 caracteres'; err.style.display='block'; return;
+  }
+
+  const token = window._resetTokenValue;
+  if (!token) {
+    err.textContent='Token inválido. Solicita un nuevo link.'; err.style.display='block'; return;
+  }
+
+  try {
+    const r = await fetch(API_URL+'/auth/confirmar-reset', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token, password })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    ok.textContent = '✓ Contraseña actualizada. Ahora puedes iniciar sesión.';
+    ok.style.display='block';
+    $('new-pass').value='';
+    $('new-pass2').value='';
+    setTimeout(()=>go('auth'), 2500);
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display='block';
+  }
+}
+
 </script>
 
 <!-- ═══════ ADMIN ═══════ -->
@@ -1197,6 +1375,32 @@ function setUserChips2(){
         <button class="btn btn-ghost btn-sm" onclick="admCargarUsuarios()">↻ Actualizar</button>
       </div>
       <div id="adm-tabla"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════ RESET PASSWORD ═══════ -->
+<div id="page-reset" class="page">
+  <nav class="nav-pub">
+    <a class="logo" onclick="go('landing')">
+      <div class="logo-icon"></div>
+      <div class="logo-text">REZERVA <span>IP</span></div>
+    </a>
+  </nav>
+  <div style="min-height:80vh;display:flex;align-items:center;justify-content:center;padding:40px 24px">
+    <div style="width:100%;max-width:420px">
+      <div class="card-lt">
+        <div id="reset-form-wrap">
+          <h2 style="font-size:24px;font-weight:800;margin-bottom:6px;letter-spacing:-0.5px">Nueva contraseña</h2>
+          <p style="font-size:14px;color:var(--muted);margin-bottom:24px">Ingresa tu nueva contraseña para acceder al sistema.</p>
+          <div class="field"><label>Nueva contraseña</label><input type="password" id="new-pass" placeholder="Mínimo 8 caracteres"></div>
+          <div class="field"><label>Confirmar contraseña</label><input type="password" id="new-pass2" placeholder="Repite la contraseña"></div>
+          <div id="new-pass-err" style="display:none" class="alert alert-err"></div>
+          <div id="new-pass-ok" style="display:none" class="alert alert-ok"></div>
+          <button class="btn btn-blue btn-full" style="font-weight:700" onclick="doConfirmarReset()">Guardar nueva contraseña →</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
