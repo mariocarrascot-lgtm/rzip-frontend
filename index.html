@@ -6,7 +6,149 @@
 <title>Rezerva IP · Registro de Anterioridad Blockchain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+// ═══════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════
+
+function showAdminTab(){
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+}
+
+async function admCargarUsuarios(){
+  const tbody = $('adm-tabla');
+  tbody.innerHTML = '<div class="empty-state"><div class="spin" style="margin:0 auto 12px"></div>Cargando…</div>';
+  try {
+    const r = await fetch(API_URL+'/api/admin/usuarios', {headers: authHeaders()});
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+
+    if (data.usuarios.length === 0) {
+      tbody.innerHTML = '<div class="empty-state"><h3>Sin usuarios</h3></div>';
+      return;
+    }
+
+    let html = '<table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Plan</th><th>Registros</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+    for (const u of data.usuarios) {
+      html += `<tr>
+        <td><div class="doc-name">${esc(u.nombre)} ${esc(u.apellido)}</div><div class="doc-cat">${esc(u.empresa||'—')}</div></td>
+        <td style="font-size:13px">${esc(u.email)}</td>
+        <td>
+          <select onchange="admCambiarPlan('${u.id}', this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--border2);border-radius:3px;background:var(--bg2)">
+            <option value="STARTER" ${u.plan==='STARTER'?'selected':''}>Starter</option>
+            <option value="PROFESSIONAL" ${u.plan==='PROFESSIONAL'?'selected':''}>Professional</option>
+            <option value="ENTERPRISE" ${u.plan==='ENTERPRISE'?'selected':''}>Enterprise</option>
+          </select>
+        </td>
+        <td style="font-size:13px;text-align:center">${u._count.registros}</td>
+        <td>${u.activo ? '<span class="tag tag-ok"><span class="dot"></span>Activo</span>' : '<span class="tag tag-dim">Inactivo</span>'}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="admToggleActivo('${u.id}', ${u.activo})" style="font-size:11px">
+            ${u.activo ? 'Desactivar' : 'Activar'}
+          </button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    tbody.innerHTML = html;
+  } catch(e) {
+    tbody.innerHTML = `<div class="empty-state alert-err">${e.message}</div>`;
+  }
+}
+
+async function admCrearUsuario(){
+  const body = {
+    nombre: $('adm-nombre').value.trim(),
+    apellido: $('adm-apellido').value.trim(),
+    email: $('adm-email').value.trim(),
+    empresa: $('adm-empresa').value.trim() || undefined,
+    password: $('adm-pass').value,
+    plan: $('adm-plan').value
+  };
+  const err = $('adm-crear-err');
+  const ok = $('adm-crear-ok');
+  err.style.display='none';
+  ok.style.display='none';
+
+  if (!body.nombre||!body.apellido||!body.email||!body.password) {
+    err.textContent='Completa todos los campos obligatorios';
+    err.style.display='block';
+    return;
+  }
+  if (body.password.length < 8) {
+    err.textContent='La contraseña debe tener al menos 8 caracteres';
+    err.style.display='block';
+    return;
+  }
+
+  try {
+    const r = await fetch(API_URL+'/api/admin/crear-usuario', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+
+    ok.textContent = `✓ Usuario ${data.email} creado correctamente con plan ${data.plan}`;
+    ok.style.display='block';
+    ['adm-nombre','adm-apellido','adm-email','adm-empresa','adm-pass'].forEach(id=>$(id).value='');
+    $('adm-plan').value='STARTER';
+    admCargarUsuarios();
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display='block';
+  }
+}
+
+async function admCambiarPlan(id, plan){
+  try {
+    const r = await fetch(API_URL+'/api/admin/usuario/'+id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ plan })
+    });
+    if (!r.ok) throw new Error('Error al cambiar plan');
+  } catch(e) {
+    alert('Error: '+e.message);
+    admCargarUsuarios();
+  }
+}
+
+async function admToggleActivo(id, activo){
+  try {
+    const r = await fetch(API_URL+'/api/admin/usuario/'+id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ activo: !activo })
+    });
+    if (!r.ok) throw new Error('Error al cambiar estado');
+    admCargarUsuarios();
+  } catch(e) {
+    alert('Error: '+e.message);
+  }
+}
+
+// Cargar usuarios cuando se abre el panel
+const _origAppGo = appGo;
+function appGo(page, btn){
+  _origAppGo(page, btn);
+  if (page === 'admin') {
+    setUserChips2();
+    admCargarUsuarios();
+  }
+}
+
+function setUserChips2(){
+  if (!AUTH.user) return;
+  const ini = (AUTH.user.nombre[0]+AUTH.user.apellido[0]).toUpperCase();
+  const n = document.getElementById('adm-user-name');
+  const a = document.getElementById('adm-user-av');
+  if (n) n.textContent = AUTH.user.nombre+' '+AUTH.user.apellido;
+  if (a) a.textContent = ini;
+}
+
+</script>
 <style>
 :root{
   --bg:#F1F1EF; --bg2:#FFFFFF;
@@ -351,6 +493,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <button class="al" onclick="appGo('register',this)">→ Nuevo Registro</button>
         <button class="al" onclick="appGo('records',this)">Mis Registros</button>
         <button class="al" onclick="appGo('verify',this)">Verificador</button>
+        <button class="al admin-only" onclick="appGo('admin',this)" style="display:none;color:#e05c5c">⚙ Admin</button>
       </div>
     </div>
     <div class="user-chip">
@@ -411,6 +554,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <button class="al on" onclick="appGo('register',this)">→ Nuevo Registro</button>
         <button class="al" onclick="appGo('records',this)">Mis Registros</button>
         <button class="al" onclick="appGo('verify',this)">Verificador</button>
+        <button class="al admin-only" onclick="appGo('admin',this)" style="display:none;color:#e05c5c">⚙ Admin</button>
       </div>
     </div>
     <div class="user-chip">
@@ -525,6 +669,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <button class="al" onclick="appGo('register',this)">→ Nuevo Registro</button>
         <button class="al on" onclick="appGo('records',this)">Mis Registros</button>
         <button class="al" onclick="appGo('verify',this)">Verificador</button>
+        <button class="al admin-only" onclick="appGo('admin',this)" style="display:none;color:#e05c5c">⚙ Admin</button>
       </div>
     </div>
     <div class="user-chip">
@@ -581,7 +726,7 @@ let AUTH = { token: null, user: null };
 let RS = { file:null, hash:null, result:null };
 try { const saved = sessionStorage.getItem('rzip_auth'); if (saved) AUTH = JSON.parse(saved); } catch(e){}
 
-const PAGES = ['landing','auth','dashboard','register','records','verify'];
+const PAGES = ['landing','auth','dashboard','register','records','verify','admin'];
 function go(id){
   const privadas = ['dashboard','register','records'];
   if (privadas.includes(id) && !AUTH.token) { id = 'auth'; }
@@ -613,6 +758,7 @@ async function doLogin(){
     if (!r.ok) throw new Error(data.error||'Error');
     AUTH = { token:data.token, user:data.usuario };
     sessionStorage.setItem('rzip_auth',JSON.stringify(AUTH));
+    if(AUTH.user.isAdmin) showAdminTab();
     go('dashboard');
   } catch(e) { showErr(err,e.message); }
   finally { btn.disabled=false; btn.textContent='Ingresar →'; }
@@ -857,9 +1003,218 @@ function fmtDateFull(d){const dt=new Date(d);return dt.toLocaleString('es-CL',{y
 if (AUTH.token) {
   fetch(API_URL+'/api/me',{headers:authHeaders()})
     .then(r=>r.ok?r.json():Promise.reject())
-    .then(u=>{AUTH.user=u;sessionStorage.setItem('rzip_auth',JSON.stringify(AUTH));})
+    .then(u=>{AUTH.user=u;sessionStorage.setItem('rzip_auth',JSON.stringify(AUTH));if(u.isAdmin)showAdminTab();})
     .catch(()=>{doLogout();});
 }
+
+// ═══════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════
+
+function showAdminTab(){
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+}
+
+async function admCargarUsuarios(){
+  const tbody = $('adm-tabla');
+  tbody.innerHTML = '<div class="empty-state"><div class="spin" style="margin:0 auto 12px"></div>Cargando…</div>';
+  try {
+    const r = await fetch(API_URL+'/api/admin/usuarios', {headers: authHeaders()});
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+
+    if (data.usuarios.length === 0) {
+      tbody.innerHTML = '<div class="empty-state"><h3>Sin usuarios</h3></div>';
+      return;
+    }
+
+    let html = '<table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Plan</th><th>Registros</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+    for (const u of data.usuarios) {
+      html += `<tr>
+        <td><div class="doc-name">${esc(u.nombre)} ${esc(u.apellido)}</div><div class="doc-cat">${esc(u.empresa||'—')}</div></td>
+        <td style="font-size:13px">${esc(u.email)}</td>
+        <td>
+          <select onchange="admCambiarPlan('${u.id}', this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--border2);border-radius:3px;background:var(--bg2)">
+            <option value="STARTER" ${u.plan==='STARTER'?'selected':''}>Starter</option>
+            <option value="PROFESSIONAL" ${u.plan==='PROFESSIONAL'?'selected':''}>Professional</option>
+            <option value="ENTERPRISE" ${u.plan==='ENTERPRISE'?'selected':''}>Enterprise</option>
+          </select>
+        </td>
+        <td style="font-size:13px;text-align:center">${u._count.registros}</td>
+        <td>${u.activo ? '<span class="tag tag-ok"><span class="dot"></span>Activo</span>' : '<span class="tag tag-dim">Inactivo</span>'}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="admToggleActivo('${u.id}', ${u.activo})" style="font-size:11px">
+            ${u.activo ? 'Desactivar' : 'Activar'}
+          </button>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    tbody.innerHTML = html;
+  } catch(e) {
+    tbody.innerHTML = `<div class="empty-state alert-err">${e.message}</div>`;
+  }
+}
+
+async function admCrearUsuario(){
+  const body = {
+    nombre: $('adm-nombre').value.trim(),
+    apellido: $('adm-apellido').value.trim(),
+    email: $('adm-email').value.trim(),
+    empresa: $('adm-empresa').value.trim() || undefined,
+    password: $('adm-pass').value,
+    plan: $('adm-plan').value
+  };
+  const err = $('adm-crear-err');
+  const ok = $('adm-crear-ok');
+  err.style.display='none';
+  ok.style.display='none';
+
+  if (!body.nombre||!body.apellido||!body.email||!body.password) {
+    err.textContent='Completa todos los campos obligatorios';
+    err.style.display='block';
+    return;
+  }
+  if (body.password.length < 8) {
+    err.textContent='La contraseña debe tener al menos 8 caracteres';
+    err.style.display='block';
+    return;
+  }
+
+  try {
+    const r = await fetch(API_URL+'/api/admin/crear-usuario', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+
+    ok.textContent = `✓ Usuario ${data.email} creado correctamente con plan ${data.plan}`;
+    ok.style.display='block';
+    ['adm-nombre','adm-apellido','adm-email','adm-empresa','adm-pass'].forEach(id=>$(id).value='');
+    $('adm-plan').value='STARTER';
+    admCargarUsuarios();
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display='block';
+  }
+}
+
+async function admCambiarPlan(id, plan){
+  try {
+    const r = await fetch(API_URL+'/api/admin/usuario/'+id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ plan })
+    });
+    if (!r.ok) throw new Error('Error al cambiar plan');
+  } catch(e) {
+    alert('Error: '+e.message);
+    admCargarUsuarios();
+  }
+}
+
+async function admToggleActivo(id, activo){
+  try {
+    const r = await fetch(API_URL+'/api/admin/usuario/'+id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ activo: !activo })
+    });
+    if (!r.ok) throw new Error('Error al cambiar estado');
+    admCargarUsuarios();
+  } catch(e) {
+    alert('Error: '+e.message);
+  }
+}
+
+// Cargar usuarios cuando se abre el panel
+const _origAppGo = appGo;
+function appGo(page, btn){
+  _origAppGo(page, btn);
+  if (page === 'admin') {
+    setUserChips2();
+    admCargarUsuarios();
+  }
+}
+
+function setUserChips2(){
+  if (!AUTH.user) return;
+  const ini = (AUTH.user.nombre[0]+AUTH.user.apellido[0]).toUpperCase();
+  const n = document.getElementById('adm-user-name');
+  const a = document.getElementById('adm-user-av');
+  if (n) n.textContent = AUTH.user.nombre+' '+AUTH.user.apellido;
+  if (a) a.textContent = ini;
+}
+
 </script>
+
+<!-- ═══════ ADMIN ═══════ -->
+<div id="page-admin" class="page">
+  <nav class="nav-app">
+    <div style="display:flex;align-items:center">
+      <a class="logo" onclick="go('dashboard')" style="margin-right:28px;text-decoration:none">
+        <div class="logo-icon"></div>
+        <div class="logo-text" style="font-size:14px">REZERVA <span>IP</span></div>
+      </a>
+      <div class="app-links">
+        <button class="al" onclick="appGo('dashboard',this)">Dashboard</button>
+        <button class="al" onclick="appGo('register',this)">→ Nuevo Registro</button>
+        <button class="al" onclick="appGo('records',this)">Mis Registros</button>
+        <button class="al" onclick="appGo('verify',this)">Verificador</button>
+        <button class="al on admin-only" onclick="appGo('admin',this)" style="color:#e05c5c">⚙ Admin</button>
+      </div>
+    </div>
+    <div class="user-chip">
+      <span id="adm-user-name">—</span><div class="av" id="adm-user-av">—</div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()" style="margin-left:4px">Salir</button>
+    </div>
+  </nav>
+
+  <div class="app-shell">
+    <div class="pg-title">
+      <h1>Panel de Admin</h1>
+      <p>Gestión de usuarios y planes</p>
+    </div>
+
+    <!-- Crear usuario -->
+    <div class="card-lt" style="margin-bottom:24px">
+      <div style="font-size:18px;font-weight:800;margin-bottom:20px;letter-spacing:-0.5px">Crear nuevo usuario</div>
+      <div class="g2">
+        <div class="field"><label>Nombre *</label><input type="text" id="adm-nombre" placeholder="Mario"></div>
+        <div class="field"><label>Apellido *</label><input type="text" id="adm-apellido" placeholder="Carrasco"></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Email *</label><input type="email" id="adm-email" placeholder="cliente@empresa.com"></div>
+        <div class="field"><label>Empresa</label><input type="text" id="adm-empresa" placeholder="Empresa SpA"></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Contraseña *</label><input type="password" id="adm-pass" placeholder="Mínimo 8 caracteres"></div>
+        <div class="field">
+          <label>Plan</label>
+          <select id="adm-plan" style="font-size:14px">
+            <option value="STARTER">Starter (10 registros/mes)</option>
+            <option value="PROFESSIONAL">Professional (50 registros/mes)</option>
+            <option value="ENTERPRISE">Enterprise (ilimitado)</option>
+          </select>
+        </div>
+      </div>
+      <div id="adm-crear-err" style="display:none" class="alert alert-err"></div>
+      <div id="adm-crear-ok" style="display:none" class="alert alert-ok"></div>
+      <button class="btn btn-blue" style="font-weight:700" onclick="admCrearUsuario()">Crear usuario →</button>
+    </div>
+
+    <!-- Lista de usuarios -->
+    <div class="card-lt" style="padding:0;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 20px 16px">
+        <div style="font-size:18px;font-weight:800;letter-spacing:-0.5px">Usuarios activos</div>
+        <button class="btn btn-ghost btn-sm" onclick="admCargarUsuarios()">↻ Actualizar</button>
+      </div>
+      <div id="adm-tabla"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
