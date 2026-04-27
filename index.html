@@ -556,7 +556,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <button class="btn btn-blue btn-full" id="li-btn" style="margin-top:8px;font-weight:700;padding:13px" onclick="doLogin()">Ingresar →</button>
         <div class="auth-foot">
           ¿No tienes cuenta? — <a href="mailto:contacto@rezervaip.com?subject=Solicitud%20acceso%20RZIP%20Blockchain">Contactar a Rezerva IP</a><br>
-          ¿Olvidaste tu contraseña? — <span style="color:var(--blue);cursor:pointer" onclick="mostrarReset()">Recuperar acceso</span>
+          ¿Olvidaste tu contraseña? — <span style="color:var(--blue);cursor:pointer" onclick="document.getElementById('form-login').style.display='none';document.getElementById('form-reset').style.display='';">Recuperar acceso</span>
         </div>
         <div id="form-reset" style="display:none;margin-top:24px">
           <div style="font-size:15px;font-weight:700;margin-bottom:4px">Recuperar contraseña</div>
