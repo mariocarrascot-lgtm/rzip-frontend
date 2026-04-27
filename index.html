@@ -555,8 +555,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <div id="li-err" style="display:none" class="alert alert-err"></div>
         <button class="btn btn-blue btn-full" id="li-btn" style="margin-top:8px;font-weight:700;padding:13px" onclick="doLogin()">Ingresar →</button>
         <div class="auth-foot">
-          ¿Aún no tienes cuenta? — <a href="mailto:contacto@rezervaip.com?subject=Consulta%20RZIP%20Blockchain">solicitar acceso</a><br>
-          <span style="font-size:12px">¿Olvidaste tu contraseña? <a href="mailto:contacto@rezervaip.com?subject=Recuperar%20contrase%C3%B1a%20RZIP%20Blockchain">contáctanos</a></span>
+          ¿No tienes cuenta? — <a href="mailto:contacto@rezervaip.com?subject=Solicitud%20acceso%20RZIP%20Blockchain">Contactar a Rezerva IP</a><br>
+          ¿Olvidaste tu contraseña? — <span style="color:var(--blue);cursor:pointer" onclick="mostrarReset()">Recuperar acceso</span>
+        </div>
+        <div id="form-reset" style="display:none;margin-top:24px">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px">Recuperar contraseña</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Ingresa tu email y te enviaremos un link para crear una nueva contraseña.</p>
+          <div class="field"><label>Correo electrónico</label><input type="email" id="reset-email" placeholder="cliente@empresa.com"></div>
+          <div id="reset-err" style="display:none" class="alert alert-err"></div>
+          <div id="reset-ok" style="display:none" class="alert alert-ok"></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost" onclick="ocultarReset()">← Volver</button>
+            <button class="btn btn-blue" id="reset-btn" style="flex:1;font-weight:700" onclick="doSolicitarReset()">Enviar link →</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1227,89 +1238,7 @@ function setUserChips2(){
 // RESET DE CONTRASEÑA
 // ═══════════════════════════════════════
 
-function mostrarReset(){
-  $('form-login').style.display='none';
-  $('form-reset').style.display='';
-}
 
-function ocultarReset(){
-  $('form-reset').style.display='none';
-  $('form-login').style.display='';
-  $('reset-err').style.display='none';
-  $('reset-ok').style.display='none';
-  $('reset-email').value='';
-}
-
-async function doSolicitarReset(){
-  const email = $('reset-email').value.trim();
-  const err = $('reset-err');
-  const ok = $('reset-ok');
-  const btn = $('reset-btn');
-  err.style.display='none';
-  ok.style.display='none';
-
-  if (!email) { err.textContent='Ingresa tu email'; err.style.display='block'; return; }
-
-  btn.disabled=true; btn.textContent='Enviando…';
-  try {
-    const r = await fetch(API_URL+'/auth/solicitar-reset', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email })
-    });
-    const data = await r.json();
-    ok.textContent = '✓ Si el email existe recibirás un correo en los próximos minutos.';
-    ok.style.display='block';
-    $('reset-email').value='';
-  } catch(e) {
-    err.textContent = 'Error al enviar. Intenta de nuevo.';
-    err.style.display='block';
-  } finally {
-    btn.disabled=false; btn.textContent='Enviar link →';
-  }
-}
-
-async function doConfirmarReset(){
-  const password = $('new-pass').value;
-  const password2 = $('new-pass2').value;
-  const err = $('new-pass-err');
-  const ok = $('new-pass-ok');
-  err.style.display='none';
-  ok.style.display='none';
-
-  if (!password || !password2) {
-    err.textContent='Completa ambos campos'; err.style.display='block'; return;
-  }
-  if (password !== password2) {
-    err.textContent='Las contraseñas no coinciden'; err.style.display='block'; return;
-  }
-  if (password.length < 8) {
-    err.textContent='Mínimo 8 caracteres'; err.style.display='block'; return;
-  }
-
-  const token = window._resetTokenValue;
-  if (!token) {
-    err.textContent='Token inválido. Solicita un nuevo link.'; err.style.display='block'; return;
-  }
-
-  try {
-    const r = await fetch(API_URL+'/auth/confirmar-reset', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ token, password })
-    });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error);
-    ok.textContent = '✓ Contraseña actualizada. Ahora puedes iniciar sesión.';
-    ok.style.display='block';
-    $('new-pass').value='';
-    $('new-pass2').value='';
-    setTimeout(()=>go('auth'), 2500);
-  } catch(e) {
-    err.textContent = e.message;
-    err.style.display='block';
-  }
-}
 
 </script>
 
