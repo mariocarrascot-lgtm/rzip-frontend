@@ -267,6 +267,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .auth-foot{margin-top:18px;text-align:center;font-size:13px;color:var(--muted);line-height:1.8;}
 .auth-foot a{color:var(--blue);text-decoration:none;}
 .app-shell{max-width:1060px;margin:0 auto;padding:40px 36px 80px;}
+.onboard-section{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:36px 32px 40px;margin-bottom:36px;}
+.onboard-badge{display:inline-block;padding:5px 14px;border-radius:20px;border:1px solid var(--border2);font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);margin-bottom:20px;}
+.onboard-title{font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-0.8px;color:var(--dark);margin-bottom:8px;}
+.onboard-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px;}
+.onboard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.onboard-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px 22px 28px;}
+.onboard-num{font-size:14px;font-weight:700;color:var(--blue);margin-bottom:14px;}
+.onboard-card h4{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:8px;line-height:1.35;}
+.onboard-card p{font-size:13px;color:var(--muted);line-height:1.6;}
 .pg-title{margin-bottom:32px;}
 .pg-title h1{font-size:32px;font-weight:800;letter-spacing:-1px;}
 .pg-title p{font-size:15px;color:var(--muted);margin-top:5px;}
@@ -346,6 +355,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   .steps-grid,.price-grid{grid-template-columns:1fr 1fr;}
   .kpi-grid{grid-template-columns:1fr 1fr;}
   .dash-grid{grid-template-columns:1fr;}
+  .onboard-grid{grid-template-columns:1fr 1fr;}
   #page-auth{flex-direction:column;}
   .auth-left{display:none;}
   .auth-right{width:100%;padding:40px 24px;}
@@ -356,6 +366,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 }
 @media(max-width:600px){
   .steps-grid,.price-grid,.g2{grid-template-columns:1fr;}
+  .onboard-grid{grid-template-columns:1fr;}
   .hero h1{font-size:38px;}
   .hero-stats{gap:28px;flex-wrap:wrap;}
   .app-shell{padding:24px 18px 60px;}
@@ -528,6 +539,35 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     </div>
   </nav>
   <div class="app-shell">
+    <!-- Onboarding -->
+    <div class="onboard-section">
+      <div class="onboard-badge">Cómo funciona</div>
+      <div class="onboard-title">De archivo a evidencia legal en 4 pasos</div>
+      <div class="onboard-sub">Sin revelar tu secreto. Sin instalar nada. Sin necesidad de entender blockchain.</div>
+      <div class="onboard-grid">
+        <div class="onboard-card">
+          <div class="onboard-num">01</div>
+          <h4>Sube tu archivo</h4>
+          <p>PDF, Word, ZIP, código. El documento nunca sale de tu dispositivo.</p>
+        </div>
+        <div class="onboard-card">
+          <div class="onboard-num">02</div>
+          <h4>Generamos el hash</h4>
+          <p>Una huella digital única de tu documento. Irreversible, anónima.</p>
+        </div>
+        <div class="onboard-card">
+          <div class="onboard-num">03</div>
+          <h4>Inscripción en blockchain</h4>
+          <p>El hash queda grabado en Polygon Mainnet con timestamp permanente.</p>
+        </div>
+        <div class="onboard-card">
+          <div class="onboard-num">04</div>
+          <h4>Descarga tu certificado</h4>
+          <p>PDF con fecha cierta, TX hash y QR verificable por cualquier tercero.</p>
+        </div>
+      </div>
+    </div>
+
     <div class="pg-title">
       <h1>Hola, <span id="dash-nombre">—</span>.</h1>
       <p>Plan <span id="dash-plan">—</span> · <span id="dash-cupo-text">—</span></p>
