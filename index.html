@@ -207,7 +207,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .hero{min-height:86vh;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:80px 48px;background:linear-gradient(to right,rgba(241,241,239,.6) 40%,transparent 100%),var(--bg);position:relative;overflow:hidden;}
 .hero::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.03) 0px,rgba(0,0,0,.03) 1px,transparent 1px,transparent 40px),repeating-linear-gradient(-45deg,rgba(0,0,0,.03) 0px,rgba(0,0,0,.03) 1px,transparent 1px,transparent 40px);pointer-events:none;}
-.hero-inner{position:relative;z-index:1;max-width:760px;}
+.hero-inner{position:relative;z-index:1;max-width:1100px;width:100%;display:flex;align-items:center;gap:64px;}
+.hero-left{flex:1;max-width:600px;}
+.hero-right{flex:0 0 auto;display:flex;flex-direction:column;gap:20px;padding:40px 36px;border-left:2px solid var(--border);margin-left:auto;}
+.hero-check{display:flex;align-items:flex-start;gap:14px;}
+.hero-check-icon{width:28px;height:28px;border-radius:50%;background:rgba(22,163,74,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.hero-check-icon svg{width:16px;height:16px;}
+.hero-check span{font-size:16px;font-weight:500;color:var(--text);line-height:1.4;letter-spacing:-0.2px;}
 .hero h1{font-size:clamp(44px,6vw,82px);font-weight:800;line-height:1.0;letter-spacing:-2px;margin-bottom:24px;text-transform:uppercase;}
 .hero h1 .blue{color:var(--blue);}
 .hero-sub{font-size:clamp(18px,2.2vw,24px);font-weight:700;color:var(--dark);margin-bottom:16px;line-height:1.3;}
@@ -345,6 +351,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   .auth-right{width:100%;padding:40px 24px;}
   .nav-pub,.nav-app{padding-left:24px;padding-right:24px;}
   .section,.hero,.ver-hero,.land-foot{padding-left:24px;padding-right:24px;}
+  .hero-inner{flex-direction:column;gap:40px;align-items:flex-start;}
+  .hero-right{border-left:none;border-top:1px solid var(--border);padding:28px 0 0;margin-left:0;flex-direction:row;flex-wrap:wrap;gap:16px 28px;}
 }
 @media(max-width:600px){
   .steps-grid,.price-grid,.g2{grid-template-columns:1fr;}
@@ -371,17 +379,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   </nav>
   <div class="hero">
     <div class="hero-inner">
-      <div style="display:inline-block;padding:6px 16px;border-radius:20px;background:rgba(90,92,232,.08);color:var(--blue);font-size:13px;font-weight:600;margin-bottom:24px;">● Válido ante tribunales en Chile y Latam</div>
-      <h1 style="text-transform:none;letter-spacing:-1.5px;">Tu secreto comercial tiene<br><span class="blue">fecha cierta hoy.</span></h1>
-      <p class="hero-body">Registra documentos, fórmulas y know-how con evidencia criptográfica inmutable. Sin revelar el contenido. Certificado descargable en 2 minutos.</p>
-      <div class="hero-btns">
-        <button class="btn btn-blue" style="padding:14px 30px;font-size:15px;font-weight:700" onclick="go('auth')">Registrar mi primer documento →</button>
+      <div class="hero-left">
+        <div style="display:inline-block;padding:6px 16px;border-radius:20px;background:rgba(90,92,232,.08);color:var(--blue);font-size:13px;font-weight:600;margin-bottom:24px;">● Válido ante tribunales en Chile y Latam</div>
+        <h1 style="text-transform:none;letter-spacing:-1.5px;">Tu secreto comercial tiene<br><span class="blue">fecha cierta hoy.</span></h1>
+        <p class="hero-body">Registra documentos, fórmulas y know-how con evidencia criptográfica inmutable. Sin revelar el contenido. Certificado descargable en 2 minutos.</p>
+        <div class="hero-btns">
+          <button class="btn btn-blue" style="padding:14px 30px;font-size:15px;font-weight:700" onclick="go('auth')">Registrar mi primer documento →</button>
+        </div>
       </div>
-      <div class="hero-stats" style="gap:28px;">
-        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-size:16px;font-weight:700;">✓</span><span style="font-size:13px;color:var(--dim);">Sin revelar el contenido</span></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-size:16px;font-weight:700;">✓</span><span style="font-size:13px;color:var(--dim);">Timestamp inmutable en Polygon</span></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-size:16px;font-weight:700;">✓</span><span style="font-size:13px;color:var(--dim);">Certificado PDF verificable</span></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="color:#16a34a;font-size:16px;font-weight:700;">✓</span><span style="font-size:13px;color:var(--dim);">Registro en 2 minutos</span></div>
+      <div class="hero-right">
+        <div class="hero-check">
+          <div class="hero-check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <span>Sin revelar el contenido</span>
+        </div>
+        <div class="hero-check">
+          <div class="hero-check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <span>Timestamp inmutable en Polygon</span>
+        </div>
+        <div class="hero-check">
+          <div class="hero-check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <span>Certificado PDF verificable</span>
+        </div>
+        <div class="hero-check">
+          <div class="hero-check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <span>Registro en 2 minutos</span>
+        </div>
       </div>
     </div>
   </div>
