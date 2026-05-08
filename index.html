@@ -143,6 +143,7 @@ function setUserChips2(){
 
 
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --bg:#F1F1EF; --bg2:#FFFFFF;
@@ -731,7 +732,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
           <div class="tx-block">
             <div class="tx-row"><div class="tx-k">Documento</div><div class="tx-v" id="rok-file"></div></div>
             <div class="tx-row"><div class="tx-k">Hash</div><div class="tx-v blue" id="rok-hash"></div></div>
-            <div class="tx-row"><div class="tx-k">Titular</div><div class="tx-v" id="rok-owner"></div></div>
+            <div class="tx-row"><div class="tx-k">Nombre del documento</div><div class="tx-v" id="rok-owner"></div></div>
             <div class="tx-row"><div class="tx-k">TX Hash</div><div class="tx-v blue" id="rok-tx"></div></div>
             <div class="tx-row"><div class="tx-k">Timestamp</div><div class="tx-v" id="rok-ts"></div></div>
             <div class="tx-row"><div class="tx-k">Verificar</div><div class="tx-v"><a id="rok-link" href="#" target="_blank">Ver en Polygonscan →</a></div></div>
@@ -992,40 +993,53 @@ function setStep(n){
   [[1,2],[2,3],[3,4]].forEach(([a,b])=>{const l=$('sl'+a+b);if(l)l.className='si-line'+(a<n?' done':'');});
 }
 
-function genPDF(){
-  if (!RS.result) return;
+function _makeQR(url){
+  const div=document.createElement('div');div.style.cssText='position:fixed;left:-9999px;top:-9999px';
+  document.body.appendChild(div);
+  new QRCode(div,{text:url,width:256,height:256,correctLevel:QRCode.CorrectLevel.M});
+  const canvas=div.querySelector('canvas');
+  const dataUrl=canvas?canvas.toDataURL('image/png'):null;
+  document.body.removeChild(div);
+  return dataUrl;
+}
+
+function _buildCert(p){
   const {jsPDF}=window.jspdf;
   const d=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,H=297;
   const c={bg:[241,241,239],card:[34,34,34],blue:[90,92,232],blue2:[123,125,240],text:[26,26,26],dim:[85,85,85],muted:[136,136,136],white:[255,255,255]};
+  // Background
   d.setFillColor(...c.bg);d.rect(0,0,W,H,'F');
+  // Top accent
   d.setFillColor(...c.blue);d.rect(0,0,W,4,'F');
+  // Header bar
   d.setFillColor(...c.card);d.rect(0,4,W,54,'F');
-  d.setDrawColor(...c.white);d.setLineWidth(.7);d.rect(18,14,13,13,'S');
+  // Logo mark (stepped bracket)
+  d.setDrawColor(...c.white);d.setLineWidth(.8);
+  d.line(18,14,18,27);d.line(18,27,24,27);d.line(24,22,31,22);d.line(31,22,31,14);
+  // Logo text
   d.setFont('helvetica','bold');d.setFontSize(18);d.setTextColor(...c.white);
   d.text('REZERVA IP',36,24);
   d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(150,150,180);
   d.text('BLOCKCHAIN REGISTRY · REGISTRO DE ANTERIORIDAD',36,30);
-  d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(...c.blue2);
-  d.text('CERTIFICADO DE REGISTRO',W/2,44,{align:'center'});
-  d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(150,150,180);
-  d.text('POLYGON MAINNET · SHA-256 · EVIDENCIA TÉCNICA INMUTABLE',W/2,50,{align:'center'});
+  // Title (bigger, no subtitle)
+  d.setFont('helvetica','bold');d.setFontSize(16);d.setTextColor(...c.blue2);
+  d.text('CERTIFICADO DE REGISTRO',W/2,48,{align:'center'});
+  // Divider
   d.setDrawColor(...c.blue);d.setLineWidth(.4);d.line(18,62,W-18,62);
-  const cid='RZIP-'+RS.result.txHash.substring(2,14).toUpperCase();
+  // Certificate ID & date
+  const cid='RZIP-'+p.txHash.substring(2,14).toUpperCase();
   d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(...c.dim);
-  d.text('N° '+cid,18,69);
-  d.text(new Date(RS.result.timestampChain).toLocaleDateString('es-CL'),W-18,69,{align:'right'});
+  d.text('N\u00B0 '+cid,18,69);
+  d.text(new Date(p.timestamp).toLocaleDateString('es-CL'),W-18,69,{align:'right'});
+  // Intro paragraph (justified)
   d.setFontSize(10);d.setTextColor(...c.text);
-  const intro='Por medio del presente documento, REZERVA IP certifica que el archivo indicado ha sido registrado mediante su huella criptográfica SHA-256 en la blockchain de Polygon (Chain ID: 137), constituyendo evidencia inmutable de su existencia.';
-  d.text(d.splitTextToSize(intro,W-36),18,78);
-  let y=95;
-  const rows=[
-    ['TITULAR',$('rf-owner').value.trim()],
-    ['DOCUMENTO',RS.file.name],
-    ['TAMAÑO',fmtB(RS.file.size)],
-    ['ALGORITMO','SHA-256 (FIPS 180-4)'],
-    ['TIMESTAMP UTC',new Date(RS.result.timestampChain).toISOString()],
-  ];
+  const intro='Por medio del presente documento, REZERVA IP certifica que el archivo indicado ha sido registrado mediante su huella criptogr\u00E1fica SHA-256 en la blockchain de Polygon (Chain ID: 137), constituyendo evidencia inmutable de su existencia.';
+  const introLines=d.splitTextToSize(intro,W-36);
+  d.text(introLines,18,78,{align:'justify',maxWidth:W-36});
+  // Data rows
+  let y=98;
+  const rows=p.rows;
   for(const [k,v] of rows){
     d.setFillColor(225,225,223);d.rect(16,y-4,W-32,14,'F');
     d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.dim);
@@ -1034,94 +1048,71 @@ function genPDF(){
     d.text(d.splitTextToSize(String(v),W-52)[0],20,y+7);
     y+=16;
   }
+  // Hash del documento (single line)
   y+=4;
-  d.setFillColor(...c.card);d.rect(16,y,W-32,32,'F');
-  d.setDrawColor(...c.blue);d.setLineWidth(.4);d.rect(16,y,W-32,32,'S');
+  d.setFillColor(...c.card);d.rect(16,y,W-32,22,'F');
+  d.setDrawColor(...c.blue);d.setLineWidth(.4);d.rect(16,y,W-32,22,'S');
   d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.blue2);
-  d.text('HUELLA CRIPTOGRÁFICA SHA-256',20,y+8);
-  d.setFont('courier','normal');d.setFontSize(8);d.setTextColor(...c.white);
-  const h=RS.result.hashDocumento.replace('0x','');
-  d.text(h.substring(0,32),20,y+17);
-  d.text(h.substring(32),20,y+24);
-  y+=40;
-  d.setFillColor(225,225,223);d.rect(16,y,W-32,24,'F');
+  d.text('HASH DEL DOCUMENTO',20,y+7);
+  d.setFont('courier','normal');d.setFontSize(7);d.setTextColor(...c.white);
+  const h=p.hash.replace('0x','');
+  d.text(h,20,y+16);
+  // TX Hash (single line)
+  y+=28;
+  d.setFillColor(225,225,223);d.rect(16,y,W-32,22,'F');
   d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.blue);
-  d.text('TRANSACTION HASH BLOCKCHAIN',20,y+7);
-  d.setFont('courier','normal');d.setFontSize(8);d.setTextColor(...c.dim);
-  d.text(RS.result.txHash.substring(0,44),20,y+15);
-  d.text(RS.result.txHash.substring(44),20,y+21);
-  d.setDrawColor(...c.blue);d.setLineWidth(.3);d.line(18,H-28,W-18,H-28);
+  d.text('TX HASH',20,y+7);
+  d.setFont('courier','normal');d.setFontSize(7);d.setTextColor(...c.dim);
+  d.text(p.txHash,20,y+16);
+  // QR code
+  y+=28;
+  try {
+    const qr=_makeQR(p.polygonscanUrl);
+    if(qr){
+      d.addImage(qr,'PNG',W-18-30,y,30,30);
+      d.setFont('helvetica','normal');d.setFontSize(6);d.setTextColor(...c.muted);
+      d.text('Escanea para verificar',W-18-15,y+33,{align:'center'});
+    }
+  } catch(e){}
+  // Footer
+  d.setDrawColor(...c.blue);d.setLineWidth(.3);d.line(18,H-18,W-18,H-18);
   d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(...c.muted);
-  d.text('REZERVA IP · Consultora de Propiedad Intelectual · Santiago, Chile',W/2,H-22,{align:'center'});
-  d.text('Evidencia técnica de anterioridad. No reemplaza el registro formal ante el INAPI.',W/2,H-16,{align:'center'});
+  d.text('REZERVA IP \u00B7 Consultor\u00EDa de Propiedad Intelectual \u00B7 Santiago, Chile',W/2,H-12,{align:'center'});
   d.setTextColor(...c.blue);
-  d.text(RS.result.polygonscanUrl,W/2,H-10,{align:'center'});
+  d.text(p.polygonscanUrl,W/2,H-7,{align:'center'});
   d.save('RZIP_Certificado_'+cid+'.pdf');
 }
 
+function genPDF(){
+  if (!RS.result) return;
+  _buildCert({
+    txHash: RS.result.txHash,
+    timestamp: RS.result.timestampChain,
+    hash: RS.result.hashDocumento,
+    polygonscanUrl: RS.result.polygonscanUrl,
+    rows: [
+      ['NOMBRE DEL DOCUMENTO',$('rf-owner').value.trim()],
+      ['ARCHIVO',RS.file.name],
+      ['TAMA\u00D1O',fmtB(RS.file.size)],
+      ['ALGORITMO','SHA-256 (FIPS 180-4)'],
+      ['TIMESTAMP UTC',new Date(RS.result.timestampChain).toISOString()],
+    ]
+  });
+}
+
 function genPDFFromRecord(rec){
-  const {jsPDF}=window.jspdf;
-  const d=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,H=297;
-  const c={bg:[241,241,239],card:[34,34,34],blue:[90,92,232],blue2:[123,125,240],text:[26,26,26],dim:[85,85,85],muted:[136,136,136],white:[255,255,255]};
-  d.setFillColor(...c.bg);d.rect(0,0,W,H,'F');
-  d.setFillColor(...c.blue);d.rect(0,0,W,4,'F');
-  d.setFillColor(...c.card);d.rect(0,4,W,54,'F');
-  d.setDrawColor(...c.white);d.setLineWidth(.7);d.rect(18,14,13,13,'S');
-  d.setFont('helvetica','bold');d.setFontSize(18);d.setTextColor(...c.white);
-  d.text('REZERVA IP',36,24);
-  d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(150,150,180);
-  d.text('BLOCKCHAIN REGISTRY · REGISTRO DE ANTERIORIDAD',36,30);
-  d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(...c.blue2);
-  d.text('CERTIFICADO DE REGISTRO',W/2,44,{align:'center'});
-  d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(150,150,180);
-  d.text('POLYGON MAINNET · SHA-256 · EVIDENCIA TÉCNICA INMUTABLE',W/2,50,{align:'center'});
-  d.setDrawColor(...c.blue);d.setLineWidth(.4);d.line(18,62,W-18,62);
-  const cid='RZIP-'+rec.txHash.substring(2,14).toUpperCase();
-  d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(...c.dim);
-  d.text('N° '+cid,18,69);
-  d.text(new Date(rec.timestampChain).toLocaleDateString('es-CL'),W-18,69,{align:'right'});
-  d.setFontSize(10);d.setTextColor(...c.text);
-  const intro='Por medio del presente documento, REZERVA IP certifica que el archivo indicado ha sido registrado mediante su huella criptográfica SHA-256 en la blockchain de Polygon (Chain ID: 137), constituyendo evidencia inmutable de su existencia.';
-  d.text(d.splitTextToSize(intro,W-36),18,78);
-  let y=95;
-  const rows=[
-    ['TITULAR',rec.titular],
-    ['DOCUMENTO',rec.nombreArchivo],
-    ['ALGORITMO','SHA-256 (FIPS 180-4)'],
-    ['TIMESTAMP UTC',new Date(rec.timestampChain).toISOString()],
-  ];
-  for(const [k,v] of rows){
-    d.setFillColor(225,225,223);d.rect(16,y-4,W-32,14,'F');
-    d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.dim);
-    d.text(k,20,y+1);
-    d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(...c.text);
-    d.text(d.splitTextToSize(String(v),W-52)[0],20,y+7);
-    y+=16;
-  }
-  y+=4;
-  d.setFillColor(...c.card);d.rect(16,y,W-32,32,'F');
-  d.setDrawColor(...c.blue);d.setLineWidth(.4);d.rect(16,y,W-32,32,'S');
-  d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.blue2);
-  d.text('HUELLA CRIPTOGRÁFICA SHA-256',20,y+8);
-  d.setFont('courier','normal');d.setFontSize(8);d.setTextColor(...c.white);
-  const h=rec.hashDocumento.replace('0x','');
-  d.text(h.substring(0,32),20,y+17);
-  d.text(h.substring(32),20,y+24);
-  y+=40;
-  d.setFillColor(225,225,223);d.rect(16,y,W-32,24,'F');
-  d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.blue);
-  d.text('TRANSACTION HASH BLOCKCHAIN',20,y+7);
-  d.setFont('courier','normal');d.setFontSize(8);d.setTextColor(...c.dim);
-  d.text(rec.txHash.substring(0,44),20,y+15);
-  d.text(rec.txHash.substring(44),20,y+21);
-  d.setDrawColor(...c.blue);d.setLineWidth(.3);d.line(18,H-28,W-18,H-28);
-  d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(...c.muted);
-  d.text('REZERVA IP · Consultora de Propiedad Intelectual · Santiago, Chile',W/2,H-22,{align:'center'});
-  d.text('Evidencia técnica de anterioridad. No reemplaza el registro formal ante el INAPI.',W/2,H-16,{align:'center'});
-  d.setTextColor(...c.blue);
-  d.text(rec.polygonscanUrl,W/2,H-10,{align:'center'});
-  d.save('RZIP_Certificado_'+cid+'.pdf');
+  _buildCert({
+    txHash: rec.txHash,
+    timestamp: rec.timestampChain,
+    hash: rec.hashDocumento,
+    polygonscanUrl: rec.polygonscanUrl,
+    rows: [
+      ['NOMBRE DEL DOCUMENTO',rec.titular],
+      ['ARCHIVO',rec.nombreArchivo],
+      ['ALGORITMO','SHA-256 (FIPS 180-4)'],
+      ['TIMESTAMP UTC',new Date(rec.timestampChain).toISOString()],
+    ]
+  });
 }
 
 const vdz=document.getElementById('vdz');
