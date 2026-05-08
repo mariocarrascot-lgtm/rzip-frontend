@@ -687,7 +687,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
         <div class="card-lt">
           <div id="rpill"></div>
           <div style="margin-bottom:22px">
-            <div class="hash-lbl">Hash SHA-256 calculado</div>
+            <div class="hash-lbl">Hash calculado</div>
             <div id="rhash"><div class="hash-loading"><div class="spin"></div><span style="font-size:13px;color:var(--muted)">Calculando…</span></div></div>
           </div>
           <div class="divider"></div>
@@ -734,11 +734,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
           </div>
           <div class="tx-block">
             <div class="tx-row"><div class="tx-k">Documento</div><div class="tx-v" id="rok-file"></div></div>
-            <div class="tx-row"><div class="tx-k">Hash SHA-256</div><div class="tx-v blue" id="rok-hash"></div></div>
+            <div class="tx-row"><div class="tx-k">Hash</div><div class="tx-v blue" id="rok-hash"></div></div>
             <div class="tx-row"><div class="tx-k">Titular</div><div class="tx-v" id="rok-owner"></div></div>
-            <div class="tx-row"><div class="tx-k">Red</div><div class="tx-v ok">Polygon Mainnet ✓</div></div>
             <div class="tx-row"><div class="tx-k">TX Hash</div><div class="tx-v blue" id="rok-tx"></div></div>
-            <div class="tx-row"><div class="tx-k">Bloque</div><div class="tx-v" id="rok-block"></div></div>
             <div class="tx-row"><div class="tx-k">Timestamp</div><div class="tx-v" id="rok-ts"></div></div>
             <div class="tx-row"><div class="tx-k">Verificar</div><div class="tx-v"><a id="rok-link" href="#" target="_blank">Ver en Polygonscan →</a></div></div>
           </div>
@@ -1024,8 +1022,6 @@ function genPDF(){
     ['DESCRIPCIÓN',$('rf-desc').value.trim()||'—'],
     ['TAMAÑO',fmtB(RS.file.size)],
     ['ALGORITMO','SHA-256 (FIPS 180-4)'],
-    ['RED BLOCKCHAIN','Polygon Mainnet · Chain ID 137'],
-    ['BLOQUE','#'+RS.result.blockNumber],
     ['TIMESTAMP UTC',new Date(RS.result.timestampChain).toISOString()],
   ];
   for(const [k,v] of rows){
