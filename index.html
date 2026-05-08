@@ -977,7 +977,6 @@ function showOK(data){
   $('rok-hash').textContent = data.hashDocumento;
   $('rok-owner').textContent = $('rf-owner').value.trim();
   $('rok-tx').textContent = data.txHash;
-  $('rok-block').textContent = data.blockNumber;
   $('rok-ts').textContent = fmtDateFull(data.timestampChain);
   $('rok-link').href = data.polygonscanUrl;
 }
