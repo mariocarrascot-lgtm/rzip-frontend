@@ -814,7 +814,7 @@ let RS = { file:null, hash:null, result:null };
 try { const saved = sessionStorage.getItem('rzip_auth'); if (saved) AUTH = JSON.parse(saved); } catch(e){}
 
 const PAGES = ['landing','auth','onboarding','dashboard','register','records','verify','admin','reset'];
-function go(id){
+function go(id, skipHistory){
   const privadas = ['onboarding','dashboard','register','records'];
   if (privadas.includes(id) && !AUTH.token) { id = 'auth'; }
   PAGES.forEach(p=>{
@@ -826,10 +826,16 @@ function go(id){
   t.style.display=(id==='auth')?'flex':'block';
   setTimeout(()=>t.classList.add('active'),10);
   window.scrollTo(0,0);
+  if (!skipHistory) history.pushState({page:id},'',' ');
   if (id==='dashboard') loadDashboard();
   if (id==='records') loadRecords();
   if (id==='admin') { setUserChips2(); admCargarUsuarios(); }
 }
+window.addEventListener('popstate', function(e){
+  if (e.state && e.state.page) { go(e.state.page, true); }
+  else if (AUTH.token) { go('dashboard', true); }
+  else { go('landing', true); }
+});
 function appGo(page,btn){ go(page); document.querySelectorAll('.al').forEach(b=>b.classList.remove('on')); if(btn) btn.classList.add('on'); }
 function scrollTo2(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth'});}
 
@@ -1155,7 +1161,7 @@ function fmtDateFull(d){const dt=new Date(d);return dt.toLocaleString('es-CL',{y
 if (AUTH.token) {
   fetch(API_URL+'/api/me',{headers:authHeaders()})
     .then(r=>r.ok?r.json():Promise.reject())
-    .then(u=>{AUTH.user=u;sessionStorage.setItem('rzip_auth',JSON.stringify(AUTH));if(u.isAdmin)showAdminTab();})
+    .then(u=>{AUTH.user=u;sessionStorage.setItem('rzip_auth',JSON.stringify(AUTH));if(u.isAdmin)showAdminTab();go('dashboard');})
     .catch(()=>{doLogout();});
 }
 
