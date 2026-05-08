@@ -691,11 +691,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
             <div id="rhash"><div class="hash-loading"><div class="spin"></div><span style="font-size:13px;color:var(--muted)">Calculando…</span></div></div>
           </div>
           <div class="divider"></div>
-          <div class="g2">
-            <div class="field"><label>Titular *</label><input type="text" id="rf-owner" placeholder="Nombre o empresa" oninput="rchk()"></div>
-            <div class="field"><label>RUT / ID</label><input type="text" id="rf-rut" placeholder="12.345.678-9"></div>
-          </div>
-          <div class="field"><label>Descripción</label><input type="text" id="rf-desc" placeholder="Ej: Memoria descriptiva invención X v1.0"></div>
+          <div class="field"><label>Nombre del documento *</label><input type="text" id="rf-owner" placeholder="Ej: Memoria descriptiva invención X v1.0" oninput="rchk()"></div>
           <div class="field">
             <label>Categoría</label>
             <select id="rf-cat" style="color:var(--dim);font-size:14px">
@@ -885,13 +881,15 @@ async function loadDashboard(){
     $('usage-fill').style.width = pct+'%';
     $('usage-text').textContent = cupo.limite===Infinity ? 'Ilimitado' : `${cupo.usados} / ${cupo.limite}`;
     const recent = rec.registros.slice(0,3);
+    window._dashRecords = recent;
     const tbody = $('dash-recent');
     if (recent.length===0) {
       tbody.innerHTML = '<div class="empty-state"><h3>Sin registros aún</h3><p>Crea tu primer registro blockchain</p></div>';
     } else {
-      let html = '<table class="tbl"><thead><tr><th>Documento</th><th>Hash</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>';
-      for (const r of recent) {
-        html += `<tr><td><div class="doc-name">${esc(r.nombreArchivo)}</div><div class="doc-cat">${esc(r.categoria||'Sin categoría')}</div></td><td><div class="hash-short">${r.hashDocumento.substring(0,10)}…${r.hashDocumento.substring(60)}</div></td><td><div style="font-size:13px;color:var(--muted)">${fmtDate(r.timestampChain)}</div></td><td><span class="tag tag-ok"><span class="dot"></span>Confirmado</span></td></tr>`;
+      let html = '<table class="tbl"><thead><tr><th>Documento</th><th>Hash</th><th>Fecha</th><th>Estado</th><th></th></tr></thead><tbody>';
+      for (let i=0; i<recent.length; i++) {
+        const r = recent[i];
+        html += `<tr><td><div class="doc-name">${esc(r.nombreArchivo)}</div><div class="doc-cat">${esc(r.categoria||'Sin categoría')}</div></td><td><div class="hash-short">${r.hashDocumento.substring(0,10)}…${r.hashDocumento.substring(60)}</div></td><td><div style="font-size:13px;color:var(--muted)">${fmtDate(r.timestampChain)}</div></td><td><span class="tag tag-ok"><span class="dot"></span>Confirmado</span></td><td><button class="btn btn-ghost btn-sm" onclick="genPDFFromRecord(window._dashRecords[${i}])" title="Descargar certificado">↓ PDF</button></td></tr>`;
       }
       html += '</tbody></table>';
       tbody.innerHTML = html;
@@ -908,9 +906,11 @@ async function loadRecords(){
     const data = await r.json();
     $('rec-subtitle').textContent = `${data.total} registros en total · ${data.cupo.usados} este mes`;
     if (data.registros.length===0) { tbody.innerHTML = '<div class="empty-state"><h3>No tienes registros</h3><p>Haz tu primer registro blockchain desde "Nuevo Registro"</p></div>'; return; }
-    let html = '<table class="tbl"><thead><tr><th>Documento</th><th>Hash</th><th>TX</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>';
-    for (const r of data.registros) {
-      html += `<tr><td><div class="doc-name">${esc(r.nombreArchivo)}</div><div class="doc-cat">${esc(r.categoria||'Sin categoría')}</div></td><td><div class="hash-short">${r.hashDocumento.substring(0,10)}…${r.hashDocumento.substring(60)}</div></td><td><a class="tx-link" href="${r.polygonscanUrl}" target="_blank">${r.txHash.substring(0,8)}…${r.txHash.substring(58)} →</a></td><td><div style="font-size:13px;color:var(--muted)">${fmtDate(r.timestampChain)}</div></td><td><span class="tag tag-ok"><span class="dot"></span>Confirmado</span></td></tr>`;
+    window._allRecords = data.registros;
+    let html = '<table class="tbl"><thead><tr><th>Documento</th><th>Hash</th><th>TX</th><th>Fecha</th><th>Estado</th><th></th></tr></thead><tbody>';
+    for (let i=0; i<data.registros.length; i++) {
+      const r = data.registros[i];
+      html += `<tr><td><div class="doc-name">${esc(r.nombreArchivo)}</div><div class="doc-cat">${esc(r.categoria||'Sin categoría')}</div></td><td><div class="hash-short">${r.hashDocumento.substring(0,10)}…${r.hashDocumento.substring(60)}</div></td><td><a class="tx-link" href="${r.polygonscanUrl}" target="_blank">${r.txHash.substring(0,8)}…${r.txHash.substring(58)} →</a></td><td><div style="font-size:13px;color:var(--muted)">${fmtDate(r.timestampChain)}</div></td><td><span class="tag tag-ok"><span class="dot"></span>Confirmado</span></td><td><button class="btn btn-ghost btn-sm" onclick="genPDFFromRecord(window._allRecords[${i}])" title="Descargar certificado">↓ PDF</button></td></tr>`;
     }
     html += '</tbody></table>';
     tbody.innerHTML = html;
@@ -936,10 +936,8 @@ async function doReg(){
   const body = {
     hashDocumento: RS.hash,
     nombreArchivo: RS.file.name,
-    descripcion: $('rf-desc').value.trim() || undefined,
     categoria: $('rf-cat').value || undefined,
-    titular: $('rf-owner').value.trim(),
-    rut: $('rf-rut').value.trim() || undefined
+    titular: $('rf-owner').value.trim()
   };
   const err = $('reg-err'); err.style.display='none';
   hide('rv-form'); show('rv-proc'); setStep(3);
@@ -971,7 +969,7 @@ function showOK(data){
   hide('rv-proc');show('rv-ok');setStep(4);
   $('rok-file').textContent = RS.file.name;
   $('rok-hash').textContent = data.hashDocumento;
-  $('rok-owner').textContent = $('rf-owner').value.trim()+($('rf-rut').value.trim()?' · '+$('rf-rut').value.trim():'');
+  $('rok-owner').textContent = $('rf-owner').value.trim();
   $('rok-tx').textContent = data.txHash;
   $('rok-block').textContent = data.blockNumber;
   $('rok-ts').textContent = fmtDateFull(data.timestampChain);
@@ -981,7 +979,7 @@ function showOK(data){
 function resetReg(){
   RS={file:null,hash:null,result:null};
   $('rfi').value='';
-  ['rf-owner','rf-rut','rf-desc'].forEach(id=>$(id).value='');
+  ['rf-owner'].forEach(id=>$(id).value='');
   hide('rv-form');hide('rv-proc');hide('rv-ok');show('rv-upload');setStep(1);
 }
 function setStep(n){
@@ -1017,9 +1015,8 @@ function genPDF(){
   d.text(d.splitTextToSize(intro,W-36),18,78);
   let y=95;
   const rows=[
-    ['TITULAR',$('rf-owner').value.trim()+($('rf-rut').value.trim()?' · '+$('rf-rut').value.trim():'')],
+    ['TITULAR',$('rf-owner').value.trim()],
     ['DOCUMENTO',RS.file.name],
-    ['DESCRIPCIÓN',$('rf-desc').value.trim()||'—'],
     ['TAMAÑO',fmtB(RS.file.size)],
     ['ALGORITMO','SHA-256 (FIPS 180-4)'],
     ['TIMESTAMP UTC',new Date(RS.result.timestampChain).toISOString()],
@@ -1054,6 +1051,71 @@ function genPDF(){
   d.text('Evidencia técnica de anterioridad. No reemplaza el registro formal ante el INAPI.',W/2,H-16,{align:'center'});
   d.setTextColor(...c.blue);
   d.text(RS.result.polygonscanUrl,W/2,H-10,{align:'center'});
+  d.save('RZIP_Certificado_'+cid+'.pdf');
+}
+
+function genPDFFromRecord(rec){
+  const {jsPDF}=window.jspdf;
+  const d=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297;
+  const c={bg:[241,241,239],card:[34,34,34],blue:[90,92,232],blue2:[123,125,240],text:[26,26,26],dim:[85,85,85],muted:[136,136,136],white:[255,255,255]};
+  d.setFillColor(...c.bg);d.rect(0,0,W,H,'F');
+  d.setFillColor(...c.blue);d.rect(0,0,W,4,'F');
+  d.setFillColor(...c.card);d.rect(0,4,W,54,'F');
+  d.setDrawColor(...c.white);d.setLineWidth(.7);d.rect(18,14,13,13,'S');
+  d.setFont('helvetica','bold');d.setFontSize(18);d.setTextColor(...c.white);
+  d.text('REZERVA IP',36,24);
+  d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(150,150,180);
+  d.text('BLOCKCHAIN REGISTRY · REGISTRO DE ANTERIORIDAD',36,30);
+  d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(...c.blue2);
+  d.text('CERTIFICADO DE REGISTRO',W/2,44,{align:'center'});
+  d.setFont('helvetica','normal');d.setFontSize(7);d.setTextColor(150,150,180);
+  d.text('POLYGON MAINNET · SHA-256 · EVIDENCIA TÉCNICA INMUTABLE',W/2,50,{align:'center'});
+  d.setDrawColor(...c.blue);d.setLineWidth(.4);d.line(18,62,W-18,62);
+  const cid='RZIP-'+rec.txHash.substring(2,14).toUpperCase();
+  d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(...c.dim);
+  d.text('N° '+cid,18,69);
+  d.text(new Date(rec.timestampChain).toLocaleDateString('es-CL'),W-18,69,{align:'right'});
+  d.setFontSize(10);d.setTextColor(...c.text);
+  const intro='Por medio del presente documento, REZERVA IP certifica que el archivo indicado ha sido registrado mediante su huella criptográfica SHA-256 en la blockchain de Polygon (Chain ID: 137), constituyendo evidencia inmutable de su existencia.';
+  d.text(d.splitTextToSize(intro,W-36),18,78);
+  let y=95;
+  const rows=[
+    ['TITULAR',rec.titular],
+    ['DOCUMENTO',rec.nombreArchivo],
+    ['ALGORITMO','SHA-256 (FIPS 180-4)'],
+    ['TIMESTAMP UTC',new Date(rec.timestampChain).toISOString()],
+  ];
+  for(const [k,v] of rows){
+    d.setFillColor(225,225,223);d.rect(16,y-4,W-32,14,'F');
+    d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.dim);
+    d.text(k,20,y+1);
+    d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(...c.text);
+    d.text(d.splitTextToSize(String(v),W-52)[0],20,y+7);
+    y+=16;
+  }
+  y+=4;
+  d.setFillColor(...c.card);d.rect(16,y,W-32,32,'F');
+  d.setDrawColor(...c.blue);d.setLineWidth(.4);d.rect(16,y,W-32,32,'S');
+  d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.blue2);
+  d.text('HUELLA CRIPTOGRÁFICA SHA-256',20,y+8);
+  d.setFont('courier','normal');d.setFontSize(8);d.setTextColor(...c.white);
+  const h=rec.hashDocumento.replace('0x','');
+  d.text(h.substring(0,32),20,y+17);
+  d.text(h.substring(32),20,y+24);
+  y+=40;
+  d.setFillColor(225,225,223);d.rect(16,y,W-32,24,'F');
+  d.setFont('helvetica','bold');d.setFontSize(7);d.setTextColor(...c.blue);
+  d.text('TRANSACTION HASH BLOCKCHAIN',20,y+7);
+  d.setFont('courier','normal');d.setFontSize(8);d.setTextColor(...c.dim);
+  d.text(rec.txHash.substring(0,44),20,y+15);
+  d.text(rec.txHash.substring(44),20,y+21);
+  d.setDrawColor(...c.blue);d.setLineWidth(.3);d.line(18,H-28,W-18,H-28);
+  d.setFont('helvetica','normal');d.setFontSize(7.5);d.setTextColor(...c.muted);
+  d.text('REZERVA IP · Consultora de Propiedad Intelectual · Santiago, Chile',W/2,H-22,{align:'center'});
+  d.text('Evidencia técnica de anterioridad. No reemplaza el registro formal ante el INAPI.',W/2,H-16,{align:'center'});
+  d.setTextColor(...c.blue);
+  d.text(rec.polygonscanUrl,W/2,H-10,{align:'center'});
   d.save('RZIP_Certificado_'+cid+'.pdf');
 }
 
