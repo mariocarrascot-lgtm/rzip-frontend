@@ -783,7 +783,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
     </a>
     <div class="nav-links">
       <a onclick="go(AUTH.token?'dashboard':'landing')">← Inicio</a>
-      <a onclick="go('auth')" class="cta">INGRESAR →</a>
+      <a onclick="go('auth')" class="cta" id="ver-ingresar">INGRESAR →</a>
     </div>
   </nav>
   <div class="ver-hero">
@@ -793,11 +793,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   </div>
   <div class="ver-wrap">
     <div class="card-lt">
+      <h3 style="font-size:15px;font-weight:700;color:var(--dark);margin:0 0 4px">Opción 1 · Pega el hash</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 16px">Si ya tienes el hash SHA-256 del documento</p>
       <div class="field">
         <label>Hash del documento</label>
         <input type="text" id="ver-hash" placeholder="64 caracteres hexadecimales…" style="font-family:'Courier New',monospace;font-size:13px">
       </div>
-      <div style="text-align:center;margin:16px 0;font-size:13px;color:var(--muted)">— o calcula el hash subiendo el archivo —</div>
+      <h3 style="font-size:15px;font-weight:700;color:var(--dark);margin:24px 0 4px">Opción 2 · Sube el archivo</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Calculamos el hash localmente. El archivo nunca sale de tu dispositivo.</p>
       <div class="drop-zone" style="padding:28px;margin-bottom:18px" id="vdz">
         <input type="file" id="vfi" onchange="vHash(this.files[0])">
         <p id="vdz-lbl" style="font-size:14px;color:var(--muted)">Arrastra el archivo para calcular su hash</p>
@@ -844,6 +847,10 @@ function go(id, skipHistory){
   if (id==='dashboard') loadDashboard();
   if (id==='records') loadRecords();
   if (id==='admin') { setUserChips2(); admCargarUsuarios(); }
+  if (id==='verify') {
+    const btnIng = document.getElementById('ver-ingresar');
+    if (btnIng) btnIng.style.display = AUTH.token ? 'none' : '';
+  }
 }
 window.addEventListener('popstate', function(e){
   if (e.state && e.state.page) { go(e.state.page, true); }
