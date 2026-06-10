@@ -850,7 +850,15 @@ window.addEventListener('popstate', function(e){
   else if (AUTH.token) { go('dashboard', true); }
   else { go('landing', true); }
 });
-function appGo(page,btn){ go(page); document.querySelectorAll('.al').forEach(b=>b.classList.remove('on')); if(btn) btn.classList.add('on'); }
+function appGo(page,btn){ go(page); marcarNavActivo(page); }
+function marcarNavActivo(page){
+  document.querySelectorAll('.al').forEach(b=>{
+    const onclickAttr = b.getAttribute('onclick')||'';
+    const m = onclickAttr.match(/appGo\('([^']+)'/);
+    if (m && m[1] === page) { b.classList.add('on'); }
+    else { b.classList.remove('on'); }
+  });
+}
 function scrollTo2(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth'});}
 
 async function doLogin(){
