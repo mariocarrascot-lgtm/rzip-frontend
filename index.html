@@ -814,6 +814,19 @@ let AUTH = { token: null, user: null };
 let RS = { file:null, hash:null, result:null };
 try { const saved = sessionStorage.getItem('rzip_auth'); if (saved) AUTH = JSON.parse(saved); } catch(e){}
 
+// Detectar token de reset en URL
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('page') === 'reset' && params.get('token')) {
+    window._resetTokenValue = params.get('token');
+    document.addEventListener('DOMContentLoaded', function(){ go('reset'); });
+  } else if (AUTH.token) {
+    document.addEventListener('DOMContentLoaded', function(){ go('dashboard'); });
+  } else {
+    document.addEventListener('DOMContentLoaded', function(){ go('landing'); });
+  }
+})();
+
 const PAGES = ['landing','auth','onboarding','dashboard','register','records','verify','admin','reset'];
 function go(id, skipHistory){
   const privadas = ['onboarding','dashboard','register','records'];
