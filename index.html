@@ -28,15 +28,15 @@ async function admCargarUsuarios(){
       return;
     }
 
-    let html = '<table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Plan</th><th>Registros</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+    let html = '<table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Hashes</th><th>Registros</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
     for (const u of data.usuarios) {
       html += `<tr>
         <td><div class="doc-name">${esc(u.nombre)} ${esc(u.apellido)}</div><div class="doc-cat">${esc(u.empresa||'—')}</div></td>
         <td style="font-size:13px">${esc(u.email)}</td>
         <td>
-          <select onchange="admCambiarPlan('${u.id}', this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--border2);border-radius:3px;background:var(--bg2)">
-
-          </select>
+          <input type="number" min="0" value="${u.hashesDisponibles ?? 0}"
+            onchange="admCambiarHashes('${u.id}', this.value)"
+            style="font-size:12px;padding:4px 8px;border:1px solid var(--border2);border-radius:3px;background:var(--bg2);width:70px">
         </td>
         <td style="font-size:13px;text-align:center">${u._count.registros}</td>
         <td>${u.activo ? '<span class="tag tag-ok"><span class="dot"></span>Activo</span>' : '<span class="tag tag-dim">Inactivo</span>'}</td>
@@ -99,14 +99,14 @@ async function admCrearUsuario(){
   }
 }
 
-async function admCambiarPlan(id, plan){
+async function admCambiarHashes(id, valor){
   try {
     const r = await fetch(API_URL+'/api/admin/usuario/'+id, {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ plan })
+      body: JSON.stringify({ hashesDisponibles: parseInt(valor) || 0 })
     });
-    if (!r.ok) throw new Error('Error al cambiar plan');
+    if (!r.ok) throw new Error('Error al actualizar hashes');
   } catch(e) {
     alert('Error: '+e.message);
     admCargarUsuarios();
@@ -1187,15 +1187,15 @@ async function admCargarUsuarios(){
       return;
     }
 
-    let html = '<table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Plan</th><th>Registros</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+    let html = '<table class="tbl"><thead><tr><th>Usuario</th><th>Email</th><th>Hashes</th><th>Registros</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
     for (const u of data.usuarios) {
       html += `<tr>
         <td><div class="doc-name">${esc(u.nombre)} ${esc(u.apellido)}</div><div class="doc-cat">${esc(u.empresa||'—')}</div></td>
         <td style="font-size:13px">${esc(u.email)}</td>
         <td>
-          <select onchange="admCambiarPlan('${u.id}', this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--border2);border-radius:3px;background:var(--bg2)">
-
-          </select>
+          <input type="number" min="0" value="${u.hashesDisponibles ?? 0}"
+            onchange="admCambiarHashes('${u.id}', this.value)"
+            style="font-size:12px;padding:4px 8px;border:1px solid var(--border2);border-radius:3px;background:var(--bg2);width:70px">
         </td>
         <td style="font-size:13px;text-align:center">${u._count.registros}</td>
         <td>${u.activo ? '<span class="tag tag-ok"><span class="dot"></span>Activo</span>' : '<span class="tag tag-dim">Inactivo</span>'}</td>
@@ -1258,14 +1258,14 @@ async function admCrearUsuario(){
   }
 }
 
-async function admCambiarPlan(id, plan){
+async function admCambiarHashes(id, valor){
   try {
     const r = await fetch(API_URL+'/api/admin/usuario/'+id, {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ plan })
+      body: JSON.stringify({ hashesDisponibles: parseInt(valor) || 0 })
     });
-    if (!r.ok) throw new Error('Error al cambiar plan');
+    if (!r.ok) throw new Error('Error al actualizar hashes');
   } catch(e) {
     alert('Error: '+e.message);
     admCargarUsuarios();
