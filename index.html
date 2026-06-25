@@ -35,9 +35,7 @@ async function admCargarUsuarios(){
         <td style="font-size:13px">${esc(u.email)}</td>
         <td>
           <select onchange="admCambiarPlan('${u.id}', this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--border2);border-radius:3px;background:var(--bg2)">
-            <option value="STARTER" ${u.plan==='STARTER'?'selected':''}>Starter</option>
-            <option value="PROFESSIONAL" ${u.plan==='PROFESSIONAL'?'selected':''}>Professional</option>
-            <option value="ENTERPRISE" ${u.plan==='ENTERPRISE'?'selected':''}>Enterprise</option>
+
           </select>
         </td>
         <td style="font-size:13px;text-align:center">${u._count.registros}</td>
@@ -63,7 +61,7 @@ async function admCrearUsuario(){
     email: $('adm-email').value.trim(),
     empresa: $('adm-empresa').value.trim() || undefined,
     password: $('adm-pass').value,
-    plan: $('adm-plan').value
+    hashesDisponibles: parseInt($('adm-hashes').value) || 0
   };
   const err = $('adm-crear-err');
   const ok = $('adm-crear-ok');
@@ -90,10 +88,10 @@ async function admCrearUsuario(){
     const data = await r.json();
     if (!r.ok) throw new Error(data.error);
 
-    ok.textContent = `✓ Usuario ${data.email} creado correctamente con plan ${data.plan}`;
+    ok.textContent = `✓ Usuario ${data.email} creado con ${data.hashesDisponibles} hashes disponibles`;
     ok.style.display='block';
     ['adm-nombre','adm-apellido','adm-email','adm-empresa','adm-pass'].forEach(id=>$(id).value='');
-    $('adm-plan').value='STARTER';
+    $('adm-hashes').value=0;
     admCargarUsuarios();
   } catch(e) {
     err.textContent = e.message;
@@ -567,7 +565,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
   <div class="app-shell">
     <div class="pg-title">
       <h1>Hola, <span id="dash-nombre">—</span>.</h1>
-      <p>Plan <span id="dash-plan">—</span> · <span id="dash-cupo-text">—</span></p>
+      <p><span id="dash-hashes">—</span> hashes disponibles</p>
     </div>
     <div class="kpi-grid">
       <div class="kpi"><div class="kpi-val" id="kpi-mes">—</div><div class="kpi-lbl">Registros este mes</div><div class="kpi-sub" id="kpi-mes-sub">—</div></div>
@@ -576,7 +574,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
       <div class="kpi"><div class="kpi-val">137</div><div class="kpi-lbl">Polygon Mainnet</div><div class="kpi-sub">Red operativa</div></div>
     </div>
     <div class="usage-wrap">
-      <div class="usage-head"><span>Uso del plan este mes</span><span id="usage-text">—</span></div>
+      <div class="usage-head"><span>Hashes utilizados en total</span><span id="usage-text">—</span></div>
       <div class="usage-bar"><div class="usage-fill" id="usage-fill" style="width:0%"></div></div>
     </div>
     <div class="dash-grid">
@@ -891,7 +889,7 @@ function setUserChips(){
 async function loadDashboard(){
   setUserChips();
   $('dash-nombre').textContent = AUTH.user.nombre;
-  $('dash-plan').textContent = AUTH.user.plan;
+  $('dash-hashes').textContent = AUTH.user.hashesDisponibles ?? 0;
   try {
     const recRes = await fetch(API_URL+'/api/mis-registros',{headers:authHeaders()});
     const rec = await recRes.json();
@@ -1196,9 +1194,7 @@ async function admCargarUsuarios(){
         <td style="font-size:13px">${esc(u.email)}</td>
         <td>
           <select onchange="admCambiarPlan('${u.id}', this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--border2);border-radius:3px;background:var(--bg2)">
-            <option value="STARTER" ${u.plan==='STARTER'?'selected':''}>Starter</option>
-            <option value="PROFESSIONAL" ${u.plan==='PROFESSIONAL'?'selected':''}>Professional</option>
-            <option value="ENTERPRISE" ${u.plan==='ENTERPRISE'?'selected':''}>Enterprise</option>
+
           </select>
         </td>
         <td style="font-size:13px;text-align:center">${u._count.registros}</td>
@@ -1224,7 +1220,7 @@ async function admCrearUsuario(){
     email: $('adm-email').value.trim(),
     empresa: $('adm-empresa').value.trim() || undefined,
     password: $('adm-pass').value,
-    plan: $('adm-plan').value
+    hashesDisponibles: parseInt($('adm-hashes').value) || 0
   };
   const err = $('adm-crear-err');
   const ok = $('adm-crear-ok');
@@ -1251,10 +1247,10 @@ async function admCrearUsuario(){
     const data = await r.json();
     if (!r.ok) throw new Error(data.error);
 
-    ok.textContent = `✓ Usuario ${data.email} creado correctamente con plan ${data.plan}`;
+    ok.textContent = `✓ Usuario ${data.email} creado con ${data.hashesDisponibles} hashes disponibles`;
     ok.style.display='block';
     ['adm-nombre','adm-apellido','adm-email','adm-empresa','adm-pass'].forEach(id=>$(id).value='');
-    $('adm-plan').value='STARTER';
+    $('adm-hashes').value=0;
     admCargarUsuarios();
   } catch(e) {
     err.textContent = e.message;
@@ -1443,11 +1439,7 @@ async function doConfirmarReset(){
         <div class="field"><label>Contraseña *</label><input type="password" id="adm-pass" placeholder="Mínimo 8 caracteres"></div>
         <div class="field">
           <label>Plan</label>
-          <select id="adm-plan" style="font-size:14px">
-            <option value="STARTER">Starter (10 registros/mes)</option>
-            <option value="PROFESSIONAL">Professional (50 registros/mes)</option>
-            <option value="ENTERPRISE">Enterprise (ilimitado)</option>
-          </select>
+          <input type="number" id="adm-hashes" min="0" value="0" style="font-size:14px;padding:6px 10px;border:1px solid var(--border);border-radius:4px;width:100px"> hashes
         </div>
       </div>
       <div id="adm-crear-err" style="display:none" class="alert alert-err"></div>
