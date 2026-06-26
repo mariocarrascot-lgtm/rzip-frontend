@@ -899,8 +899,7 @@ async function loadDashboard(){
     $('kpi-mes').textContent = rec.total;
     $('kpi-mes-sub').textContent = `${disponibles} disponibles`;
     $('kpi-total').textContent = rec.total;
-    $('usage-fill').style.width = '0%';
-    $('usage-text').textContent = `${rec.total} registros en total`;
+
     const recent = rec.registros.slice(0,3);
     window._dashRecords = recent;
     const tbody = $('dash-recent');
