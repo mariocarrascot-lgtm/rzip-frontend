@@ -994,6 +994,12 @@ function showOK(data){
   $('rok-tx').textContent = data.txHash;
   $('rok-ts').textContent = fmtDateFull(data.timestampChain);
   $('rok-link').href = data.polygonscanUrl;
+  // Actualizar hashes disponibles en memoria y dashboard
+  if (data.hashesDisponibles !== undefined) {
+    AUTH.user.hashesDisponibles = data.hashesDisponibles;
+    const el = $('dash-hashes');
+    if (el) el.textContent = data.hashesDisponibles;
+  }
 }
 
 function resetReg(){
